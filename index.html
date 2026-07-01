@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ĐIỆN THOẠI NGON - Quản Lý Kho, Dòng Tiền & Hợp Đồng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-contract-area, #print-contract-area * {
+                visibility: visible;
+            }
+            #print-contract-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<div id="store-info" style="display:none">Pháp nhân: Điện Thoại Ngon | MST: 079303000643 | Địa chỉ: Quận 12, TP.HCM | SĐT: 0906638230</div>
+
+    <div id="toast" class="fixed top-5 right-5 z-50 flex items-center p-4 rounded-xl shadow-xl transition-all transform duration-300 translate-y-[-100px] opacity-0 pointer-events-none">
+        <div id="toast-icon-container" class="mr-2 p-1 bg-white/20 rounded-lg"></div>
+        <span id="toast-message" class="font-semibold text-sm">Thông báo</span>
+    </div>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 transform transition-all">
+            <div class="flex items-center gap-3 text-amber-500">
+                <i data-lucide="help-circle" class="w-8 h-8"></i>
+                <h4 class="font-extrabold text-slate-800 text-lg">Xác nhận yêu cầu</h4>
+            </div>
+            <p id="confirm-message" class="text-sm text-slate-600 leading-relaxed">Bạn có chắc chắn muốn thực hiện hành động này không?</p>
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="handleConfirmResponse(false)" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">HỦY BỎ</button>
+                <button onclick="handleConfirmResponse(true)" id="btn-confirm-action" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-colors">ĐỒNG Ý</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="sticky top-0 z-40 bg-indigo-700 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-indigo-700 p-2 rounded-xl shadow-inner">
+                    <i data-lucide="wallet" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-wide flex items-center gap-1.5">
+                        ĐIỆN THOẠI NGON
+                        <span class="text-[10px] bg-emerald-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Hợp đồng điện tử v2.0</span>
+                    </h1>
+                    <p class="text-xs text-indigo-100 font-medium">Bán máy & Thu cũ • Đối soát két tiền mặt • Quản lý hồ sơ cam kết pháp lý</p>
+                </div>
+            </div>
+            
+            <div class="flex bg-indigo-800/60 p-1 rounded-xl gap-1 w-full md:w-auto overflow-x-auto">
+                <button onclick="switchTab('inventory')" id="tab-inventory" class="flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap bg-white text-indigo-700 shadow-sm">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    Bán hàng & Thu cũ
+                </button>
+                <button onclick="switchTab('report')" id="tab-report" class="flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap text-indigo-200 hover:text-white hover:bg-white/10">
+                    <i data-lucide="wallet" class="w-4 h-4"></i>
+                    Báo cáo két tiền ngày
+                </button>
+                <button onclick="switchTab('products')" id="tab-products" class="flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap text-indigo-200 hover:text-white hover:bg-white/10">
+                    <i data-lucide="package" class="w-4 h-4"></i>
+                    Kho máy hiện tại
+                </button>
+            </div>
+        </div>
+    </header>
+
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+    
+    <section id="sec-inventory" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-500"></i>
+                            Bộ lọc tra cứu máy nhanh
+                        </h2>
+                        <button onclick="openDirectBuybackModal()" class="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-extrabold transition-all border border-emerald-200">
+                            <i data-lucide="file-signature" class="w-4 h-4"></i>
+                            Thu mua & Lập hợp đồng máy lẻ (Chi tiền)
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div class="relative sm:col-span-2">
+                            <input type="text" id="search-input" oninput="applyFilters()" placeholder="Tìm tên máy, hãng, màu, tình trạng..." class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                            <i data-lucide="search" class="absolute left-3 top-3 w-4.5 h-4.5 text-slate-400"></i>
+                        </div>
+                        <div>
+                            <select id="filter-brand" onchange="applyFilters()" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                                <option value="All">Tất cả hãng</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="filter-condition" onchange="applyFilters()" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                                <option value="All">Mọi tình trạng</option>
+                                <option value="Mới 100%">Mới 100%</option>
+                                <option value="99% Keng">99% Keng</option>
+                                <option value="98% Phẩy">98% Phẩy</option>
+                                <option value="Cũ / Trầy xước">Cũ / Trầy xước</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+                            <i data-lucide="layers" class="w-4.5 h-4.5 text-indigo-500"></i>
+                            Kho máy hiện có (<span id="count-filtered-phones">0</span>)
+                        </h3>
+                        <span class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-1 rounded-lg">Nhấp "Bán" để lên hóa đơn</span>
+                    </div>
+
+                    <div id="phone-list-container" class="divide-y divide-slate-100 max-h-[62vh] overflow-y-auto">
+                        </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 h-fit space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 text-indigo-600"></i>
+                        Đơn hàng xuất bán
+                    </h3>
+                    <span id="cart-count-badge" class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded-full">0 máy</span>
+                </div>
+
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                        <i data-lucide="user-check" class="w-4 h-4 text-indigo-500"></i>
+                        THÔNG TIN KHÁCH HÀNG & HĐ
+                    </h4>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Tên khách hàng *</label>
+                        <input type="text" id="customer-name" placeholder="Họ và tên khách hàng..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="flex items-center gap-2 pt-1">
+                        <input type="checkbox" id="sale-contract-toggle" onchange="toggleSaleContractForm()" class="h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                        <label for="sale-contract-toggle" class="text-xs font-bold text-indigo-700 cursor-pointer">Lập hợp đồng cam kết mua bán</label>
+                    </div>
+
+                    <div id="sale-contract-fields" class="space-y-2.5 pt-2 border-t border-slate-200 hidden">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Số CCCD / CMND *</label>
+                            <input type="text" id="contract-cccd" placeholder="Số căn cước công dân..." class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Số điện thoại *</label>
+                                <input type="text" id="contract-phone" placeholder="Số liên hệ..." class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Mã IMEI / Serial *</label>
+                                <input type="text" id="contract-imei" placeholder="IMEI thiết bị..." class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Đính kèm ảnh bản hợp đồng ký tay/CCCD</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <label class="cursor-pointer flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition-all w-full">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <span>Chụp ảnh / Tải lên</span>
+                                    <input type="file" id="contract-image-file" accept="image/*" onchange="handleContractImageUpload(this, 'sale')" class="hidden">
+                                </label>
+                            </div>
+                            <div id="sale-contract-preview-box" class="mt-2 hidden border border-slate-200 rounded-lg overflow-hidden bg-white p-1.5 relative">
+                                <img id="sale-contract-preview" src="" class="w-full max-h-36 object-contain rounded-md" alt="Preview Hợp đồng">
+                                <button type="button" onclick="removeContractImage('sale')" class="absolute top-2 right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cart-items-container" class="space-y-3 max-h-[25vh] overflow-y-auto pr-1"></div>
+
+                <div class="pt-2">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">Bớt tiền cho khách (VND)</label>
+                    <input type="number" id="cart-discount" oninput="calculateCartTotals()" placeholder="Nhập số tiền bớt cho khách..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="border border-emerald-100 bg-emerald-50/30 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wide cursor-pointer">
+                            <input type="checkbox" id="tradein-toggle" onchange="toggleTradeInForm()" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+                            <span>Thu máy cũ của khách (Trừ tiền)</span>
+                        </label>
+                    </div>
+
+                    <div id="tradein-form-container" class="space-y-2.5 hidden">
+                        <div>
+                            <label class="block text-[10px] font-bold text-emerald-700 uppercase">Tên máy thu vào *</label>
+                            <input type="text" id="tradein-name" placeholder="Ví dụ: iPhone 14 Pro Max" class="w-full px-3 py-1.5 rounded-lg border border-emerald-200 text-xs focus:outline-none bg-white">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-700 uppercase">Hãng</label>
+                                <select id="tradein-brand" class="w-full px-2 py-1.5 rounded-lg border border-emerald-200 text-xs focus:outline-none bg-white">
+                                    <option value="Apple">Apple</option>
+                                    <option value="Samsung">Samsung</option>
+                                    <option value="Xiaomi">Xiaomi</option>
+                                    <option value="Oppo">Oppo</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-700 uppercase">Dung lượng</label>
+                                <select id="tradein-storage" class="w-full px-2 py-1.5 rounded-lg border border-emerald-200 text-xs focus:outline-none bg-white">
+                                    <option value="128GB">128GB</option>
+                                    <option value="256GB">256GB</option>
+                                    <option value="512GB">512GB</option>
+                                    <option value="64GB">64GB</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-700 uppercase">Tình trạng</label>
+                                <select id="tradein-condition" class="w-full px-2 py-1.5 rounded-lg border border-emerald-200 text-xs focus:outline-none bg-white">
+                                    <option value="99% Keng">99% Zin Keng</option>
+                                    <option value="98% Phẩy">98% Phẩy</option>
+                                    <option value="Cũ / Trầy xước">Cũ / Trầy vỏ</option>
+                                    <option value="Mới 100%">Mới 100%</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-700 uppercase">IMEI máy thu cũ *</label>
+                                <input type="text" id="tradein-imei" placeholder="IMEI máy thu..." class="w-full px-2 py-1.5 rounded-lg border border-emerald-200 text-xs font-mono bg-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-emerald-700 uppercase">Định giá thu mua (VND) *</label>
+                            <input type="text" id="tradein-price" oninput="calculateCartTotals(); formatInputCurrency(this)" placeholder="Ví dụ: 12.000.000" class="w-full px-3 py-1.5 rounded-lg border border-emerald-200 text-xs font-bold text-emerald-800 focus:outline-none bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-emerald-700 uppercase">Ảnh chụp HĐ thu mua/CCCD Khách *</label>
+                            <label class="cursor-pointer flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-all w-full mt-1">
+                                <i data-lucide="camera" class="w-4 h-4"></i>
+                                <span>Chụp ảnh / Tải lên</span>
+                                <input type="file" id="tradein-image-file" accept="image/*" onchange="handleContractImageUpload(this, 'tradein')" class="hidden">
+                            </label>
+                            <div id="tradein-contract-preview-box" class="mt-2 hidden border border-emerald-200 rounded-lg overflow-hidden bg-white p-1.5 relative">
+                                <img id="tradein-contract-preview" src="" class="w-full max-h-36 object-contain rounded-md" alt="Preview Hợp đồng Thu cũ">
+                                <button type="button" onclick="removeContractImage('tradein')" class="absolute top-2 right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-100">
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Giá máy bán ra:</span>
+                        <span id="summary-subtotal" class="font-semibold text-slate-700">0đ</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-rose-500">
+                        <span>Bớt giá (Giảm):</span>
+                        <span id="summary-discount" class="font-semibold">-0đ</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-emerald-600 hidden" id="summary-tradein-row">
+                        <span>Trừ máy thu cũ của khách:</span>
+                        <span id="summary-tradein" class="font-semibold">-0đ</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-slate-800 border-t border-dashed border-slate-200 pt-2 font-bold">
+                        <span id="summary-action-label">Khách phải trả (Tiền mặt thu):</span>
+                        <span id="summary-total" class="text-base text-indigo-600">0đ</span>
+                    </div>
+                </div>
+
+                <button onclick="checkoutCart()" id="btn-checkout" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> XUẤT HÀNG & CẬP NHẬT KÉT TIỀN
+                </button>
+            </div>
+        </section>
+
+        <section id="sec-report" class="space-y-6 hidden">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Thống kê Két tiền & Doanh thu (<span id="rep-selected-date-title" class="text-indigo-600">...</span>)</h3>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="date" id="report-date-picker" onchange="localStorage.setItem('lastReportDate', this.value); renderReport()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="setToToday()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors whitespace-nowrap">Hôm nay</button>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-indigo-800 to-indigo-950 text-white rounded-3xl p-6 shadow-lg border border-indigo-900">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-indigo-700/50">
+                    <div>
+                        <span class="text-xs text-indigo-200 uppercase tracking-widest font-bold">Quản lý dòng tiền mặt</span>
+                        <h2 class="text-2xl font-black mt-1">ĐỐI SOÁT KÉT TIỀN HÀNG NGÀY</h2>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-2xl flex items-center gap-2">
+                        <span class="text-xs text-indigo-200 font-semibold">Tiền mặt đầu ngày khởi tạo:</span>
+                        <input type="text" id="input-starting-cash" oninput="updateStartingCash(); formatInputCurrency(this)" placeholder="Ví dụ: 20.000.000" class="w-32 bg-indigo-900/60 border border-indigo-500 text-white rounded-lg px-2 py-1 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                        <span class="text-xs text-indigo-200">đ</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6">
+                    <div class="space-y-1"><span class="text-xs text-indigo-200">1. Quỹ đầu ngày (+)</span><p id="cash-start-display" class="text-lg font-extrabold text-slate-100">0đ</p></div>
+                    <div class="space-y-1 text-emerald-400"><span class="text-xs text-indigo-200">2. Thu từ bán hàng (+)</span><p id="cash-in-display" class="text-lg font-extrabold">+0đ</p></div>
+                    <div class="space-y-1 text-rose-400"><span class="text-xs text-indigo-200">3. Chi tiền thu mua máy (-)</span><p id="cash-out-display" class="text-lg font-extrabold">-0đ</p></div>
+                    <div class="bg-indigo-600/40 p-4 rounded-2xl border border-indigo-400/20">
+                        <span class="text-xs text-indigo-100 uppercase font-black">4. Tiền mặt hiện tại còn trong két (=)</span>
+                        <p id="cash-current-display" class="text-2xl font-black text-amber-300 mt-1">0đ</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <span class="text-xs text-slate-400 font-semibold uppercase block">Doanh thu bán ra</span>
+                    <span id="rep-total-revenue" class="text-xl font-extrabold text-indigo-600 mt-1 block">0đ</span>
+                    <p class="text-[10px] text-slate-400 mt-1" id="rep-avg-value">Đơn giá bán trung bình: 0đ</p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <span class="text-xs text-slate-400 font-semibold uppercase block">Giá Vốn xuất kho</span>
+                    <span id="rep-total-cost" class="text-xl font-extrabold text-slate-700 mt-1 block">0đ</span>
+                    <p class="text-[10px] text-slate-400 mt-1" id="rep-total-qty">Số máy đã bán: 0 chiếc</p>
+                </div>
+                <div class="bg-emerald-500 text-white rounded-2xl p-5 shadow-sm">
+                    <span class="text-xs text-emerald-100 font-bold uppercase block">Lợi Nhuận Thực Tế Trong Ngày</span>
+                    <span id="rep-total-profit" class="text-2xl font-black mt-1 block">0đ</span>
+                    <p class="text-[10px] text-emerald-100 mt-1" id="rep-profit-margin">Đã trừ vốn gốc và chiết khấu cho khách</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i data-lucide="arrow-up-right" class="w-4 h-4 text-indigo-600"></i> Danh sách hóa đơn BÁN RA & HỒ SƠ</h4>
+                        <span id="sales-badge-count" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">0 đơn</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase">
+                                    <th class="p-3">Giờ/Mã</th>
+                                    <th class="p-3">Khách mua</th>
+                                    <th class="p-3">Sản phẩm</th>
+                                    <th class="p-3 text-right">Khách trả</th>
+                                    <th class="p-3 text-center">Hợp đồng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-sales-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-600"></i> Nhật ký THU MUA MÁY CŨ (Chi tiền)</h4>
+                        <span id="buybacks-badge-count" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">0 máy</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase">
+                                    <th class="p-3">Giờ/Loại</th>
+                                    <th class="p-3">Nguồn thu</th>
+                                    <th class="p-3">Sản phẩm thu mua</th>
+                                    <th class="p-3 text-right">Tiền chi ra</th>
+                                    <th class="p-3 text-center">Hợp đồng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-buybacks-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-products" class="space-y-6 hidden">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg">Quản trị kho hàng chi tiết</h3>
+                    <p class="text-xs text-slate-500">Chỉnh sửa giá bán lẻ, giá nhập, tình trạng máy, kiểm kho và bổ sung máy mới vào kho</p>
+                </div>
+                <button onclick="openProductModal()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-xl text-sm transition-all shadow-md">
+                    <i data-lucide="plus" class="w-5 h-5"></i> NHẬP MÁY MỚI VÀO KHO
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100">
+                                <th class="px-6 py-4">Mô tả thiết bị</th>
+                                <th class="px-6 py-4">Hãng</th>
+                                <th class="px-6 py-4 text-center">Tình trạng</th>
+                                <th class="px-6 py-4">Bộ phụ kiện kèm</th>
+                                <th class="px-6 py-4 text-center">Tồn kho</th>
+                                <th class="px-6 py-4 text-right">Giá gốc (Vốn)</th>
+                                <th class="px-6 py-4 text-right">Giá bán đề xuất</th>
+                                <th class="px-6 py-4 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+</main>
+
+    <div id="product-modal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 transform transition-all">
+            <div class="bg-indigo-700 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2"><i data-lucide="smartphone" class="w-5 h-5"></i><h3 id="modal-title" class="font-bold text-lg">Thêm điện thoại mới vào kho</h3></div>
+                <button onclick="closeProductModal()" class="text-white/80 hover:text-white bg-white/10 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="product-form" onsubmit="saveProduct(event)" class="p-6 space-y-4">
+                <input type="hidden" id="form-phone-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Tên điện thoại / Dòng máy *</label>
+                    <input type="text" id="form-name" required placeholder="Ví dụ: iPhone 15 Pro Max..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Hãng</label>
+                        <select id="form-brand" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white font-semibold">
+                            <option value="Apple">Apple</option><option value="Samsung">Samsung</option><option value="Xiaomi">Xiaomi</option><option value="Oppo">Oppo</option><option value="Vivo">Vivo</option><option value="Realme">Realme</option><option value="Honor">Honor</option><option value="Huawei">Huawei</option><option value="OnePlus">OnePlus</option><option value="Meizu">Meizu</option><option value="Infinix">Infinix</option><option value="Sony">Sony</option><option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Bộ nhớ</label>
+                        <input type="text" id="form-storage" placeholder="256GB..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Màu sắc</label>
+                        <input type="text" id="form-color" placeholder="Titan..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Tình trạng máy *</label>
+                        <select id="form-condition" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white font-semibold">
+                            <option value="Mới 100%">Mới 100%</option><option value="99% Keng">99% Zin Keng</option><option value="98% Phẩy">98% Phẩy nhẹ</option><option value="Cũ / Trầy xước">Cũ / Trầy xước</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Số lượng tồn kho *</label>
+                        <input type="number" id="form-stock" required min="0" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Phụ kiện kèm theo máy</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <label class="flex items-center gap-1.5 text-xs text-slate-700"><input type="checkbox" value="Cáp sạc" class="form-acc h-4 w-4 rounded accent-indigo-600"><span>Cáp sạc</span></label>
+                        <label class="flex items-center gap-1.5 text-xs text-slate-700"><input type="checkbox" value="Củ sạc" class="form-acc h-4 w-4 rounded accent-indigo-600"><span>Củ sạc</span></label>
+                        <label class="flex items-center gap-1.5 text-xs text-slate-700"><input type="checkbox" value="Hộp máy (Box)" class="form-acc h-4 w-4 rounded accent-indigo-600"><span>Hộp máy (Box)</span></label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Giá vốn nhập máy (VND) *</label>
+                        <input type="text" id="form-original-price" required oninput="formatInputCurrency(this)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Giá bán lẻ đề xuất *</label>
+                        <input type="text" id="form-selling-price" required oninput="formatInputCurrency(this)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-indigo-600">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Hình ảnh đại diện</label>
+                    <select id="form-image" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white">
+                        <option value="📱">📱 Điện thoại Đứng</option><option value="📦">📦 Nguyên hộp Seal</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeProductModal()" class="px-5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 font-bold text-xs">HỦY BỎ</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md">LƯU THÔNG TIN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="buyback-modal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="bg-emerald-700 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2"><i data-lucide="file-signature" class="w-5 h-5"></i><h3 class="font-bold text-lg">Phiếu thu mua máy lẻ</h3></div>
+                <button onclick="closeDirectBuybackModal()" class="text-white/80 hover:text-white bg-white/10 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="buyback-form" onsubmit="saveDirectBuyback(event)" class="p-6 space-y-3.5">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="bb-customer" required placeholder="Họ tên khách *" class="w-full px-3 py-2 rounded-xl border text-sm">
+                    <input type="text" id="bb-brand" required placeholder="Hãng (Ví dụ: Xiaomi) *" class="w-full px-3 py-2 rounded-xl border text-sm">
+                </div>
+                <div>
+                    <input type="text" id="bb-name" required placeholder="Tên máy thu vào *" class="w-full px-3 py-2 rounded-xl border text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="bb-condition" class="w-full px-3 py-2 rounded-xl border text-sm bg-white"><option value="99% Keng">99% Zin Keng</option><option value="98% Phẩy">98% Phẩy</option></select>
+                    <input type="text" id="bb-price" required oninput="formatInputCurrency(this)" placeholder="Giá chi trả (VND) *" class="w-full px-3 py-2 rounded-xl border text-sm font-bold text-emerald-800">
+                </div>
+                <div class="pt-4 border-t flex justify-end gap-3">
+                    <button type="button" onclick="closeDirectBuybackModal()" class="px-5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold">HỦY BỎ</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md">XÁC NHẬN CHI TIỀN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Cơ sở dữ liệu gốc khởi tạo ban đầu
+        let initialPhones = [
+            {"id": "1", "name": "Mi Mix4 8/256", "brand": "Xiaomi", "originalPrice": 3000000, "sellingPrice": 3500000, "stock": 1, "color": "Xám", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "2", "name": "Note 13 5G", "brand": "Xiaomi", "originalPrice": 1800000, "sellingPrice": 2200000, "stock": 1, "color": "Đen", "storage": "128GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "3", "name": "Note 13 chính hãng 8/128", "brand": "Xiaomi", "originalPrice": 1500000, "sellingPrice": 1800000, "stock": 1, "color": "Xanh", "storage": "128GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "4", "name": "Meizu 21 16/256", "brand": "Meizu", "originalPrice": 4700000, "sellingPrice": 5200000, "stock": 1, "color": "Trắng", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "5", "name": "S22 Ultra 8/128 Mỹ 2 sim", "brand": "Samsung", "originalPrice": 6000000, "sellingPrice": 6800000, "stock": 1, "color": "Đen", "storage": "128GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "6", "name": "Oppo A3 Pro 12/512", "brand": "Oppo", "originalPrice": 3200000, "sellingPrice": 3700000, "stock": 1, "color": "Hồng", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "7", "name": "Find X8 Pro 16/512 pin 93", "brand": "Oppo", "originalPrice": 9999000, "sellingPrice": 10800000, "stock": 1, "color": "Xanh", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "8", "name": "Find X8s 16/256", "brand": "Oppo", "originalPrice": 8700000, "sellingPrice": 9500000, "stock": 1, "color": "Bạc", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "9", "name": "Realme 7 Pro 12/256", "brand": "Realme", "originalPrice": 2000000, "sellingPrice": 2400000, "stock": 1, "color": "Xanh", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "10", "name": "Find X9s chính hãng BH 2028 fullbox", "brand": "Oppo", "originalPrice": 14500000, "sellingPrice": 15800000, "stock": 1, "color": "Trắng", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "11", "name": "Find X9 Pro 12/256 Fullbox", "brand": "Oppo", "originalPrice": 14900000, "sellingPrice": 16500000, "stock": 1, "color": "Đen Vàng", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "12", "name": "OnePlus Ace3 16/512", "brand": "OnePlus", "originalPrice": 5300000, "sellingPrice": 5900000, "stock": 1, "color": "Vàng", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "13", "name": "Magic 8 12/256 như mới", "brand": "Honor", "originalPrice": 12900000, "sellingPrice": 14200000, "stock": 1, "color": "Xanh", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "14", "name": "Magic8 Pro 12/256 keng", "brand": "Honor", "originalPrice": 16500000, "sellingPrice": 17800000, "stock": 1, "color": "Đen", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "15", "name": "Huawei P60 Art 512G", "brand": "Huawei", "originalPrice": 6000000, "sellingPrice": 6900000, "stock": 1, "color": "Xanh Dương", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "16", "name": "GT Pro 12/256", "brand": "Honor", "originalPrice": 8900000, "sellingPrice": 9800000, "stock": 1, "color": "Bạc", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "17", "name": "Magic6 Pro 16/512", "brand": "Honor", "originalPrice": 8500000, "sellingPrice": 9400000, "stock": 1, "color": "Tím", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "18", "name": "Pura 70 Ultra 16/512", "brand": "Huawei", "originalPrice": 11000000, "sellingPrice": 12200000, "stock": 1, "color": "Xanh Lá", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "19", "name": "Magic4 Pro", "brand": "Honor", "originalPrice": 3200000, "sellingPrice": 3800000, "stock": 1, "color": "Vàng", "storage": "128GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "20", "name": "Honor 200", "brand": "Honor", "originalPrice": 3000000, "sellingPrice": 3500000, "stock": 1, "color": "Đen", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "21", "name": "Honor 200 Pro", "brand": "Honor", "originalPrice": 4000000, "sellingPrice": 4600000, "stock": 1, "color": "Trắng", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "22", "name": "Finfix Hot 50 Pro+ Plus 8/256", "brand": "Infinix", "originalPrice": 2000000, "sellingPrice": 2400000, "stock": 1, "color": "Đen Vàng", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "23", "name": "Ace3 16/512 Bản Nhám", "brand": "OnePlus", "originalPrice": 5200000, "sellingPrice": 5800000, "stock": 1, "color": "Xám", "storage": "512GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "24", "name": "X60 Pro", "brand": "Vivo", "originalPrice": 2000000, "sellingPrice": 2500000, "stock": 1, "color": "Xanh hồng", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "25", "name": "Sony Xperia 1 IV", "brand": "Sony", "originalPrice": 1500000, "sellingPrice": 1900000, "stock": 1, "color": "Tím", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "26", "name": "Realme GT Master 12/256", "brand": "Realme", "originalPrice": 2000000, "sellingPrice": 2500000, "stock": 1, "color": "Xám Vali", "storage": "256GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "27", "name": "iPhone XR Lock", "brand": "Apple", "originalPrice": 1500000, "sellingPrice": 1990000, "stock": 1, "color": "Đỏ", "storage": "64GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "28", "name": "iPhone 8 Vỏ Trầy", "brand": "Apple", "originalPrice": 1200000, "sellingPrice": 1500000, "stock": 1, "color": "Vàng", "storage": "64GB", "condition": "Cũ / Trầy xước", "accessories": [], "image": "📱"},
+            {"id": "29", "name": "iPhone 8 Plus", "brand": "Apple", "originalPrice": 1500000, "sellingPrice": 2100000, "stock": 1, "color": "Trắng", "storage": "64GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "30", "name": "iPhone 11 Pro", "brand": "Apple", "originalPrice": 2500000, "sellingPrice": 3400000, "stock": 1, "color": "Xanh Rêu", "storage": "64GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "31", "name": "iPhone 14 Plus", "brand": "Apple", "originalPrice": 8500000, "sellingPrice": 9600000, "stock": 1, "color": "Xanh Dương", "storage": "128GB", "condition": "99% Keng", "accessories": [], "image": "📱"},
+            {"id": "32", "name": "iPhone 13 Pro Max Lock", "brand": "Apple", "originalPrice": 6500000, "sellingPrice": 7500000, "stock": 1, "color": "Xanh Gold", "storage": "128GB", "condition": "99% Keng", "accessories": [], "image": "📱"}
+        ];
+
+        // NÂNG CẤP 3: TẢI HÀNG TỪ LOCALSTORAGE NẾU CÓ, NẾU KHÔNG THÌ LẤY MẢNG GỐC
+        let phones = JSON.parse(localStorage.getItem('dn_phones')) || initialPhones;
+        let sales = JSON.parse(localStorage.getItem('dn_sales')) || [];
+        let buybacks = JSON.parse(localStorage.getItem('dn_buybacks')) || [];
+        let startingCash = Number(localStorage.getItem('dn_startingCash')) || 20000000;
+
+        let cart = [];
+        let currentTab = 'inventory';
+        let uploadedImages = { sale: '', tradein: '', buyback: '' };
+
+        // Hàm hỗ trợ đồng bộ mảng dữ liệu vào LocalStorage
+        function syncLocalStorage() {
+            localStorage.setItem('dn_phones', JSON.stringify(phones));
+            localStorage.setItem('dn_sales', JSON.stringify(sales));
+            localStorage.setItem('dn_buybacks', JSON.stringify(buybacks));
+            localStorage.setItem('dn_startingCash', startingCash.toString());
+        }
+
+        // --- NÂNG CẤP 2: HÀM ĐỊNH DẠNG DẤU CHẤM TIỀN TỆ KHI ĐANG GÕ FORM ---
+        function formatInputCurrency(input) {
+            let value = input.value.replace(/\./g, '');
+            if (!isNaN(value) && value !== "") {
+                input.value = Number(value).toLocaleString('vi-VN');
+            }
+        }
+        function getRawNumber(elementId) {
+            const val = document.getElementById(elementId).value.replace(/\./g, '');
+            return Number(val) || 0;
+        }
+
+        // Custom Confirm Dialog Handler
+        let currentConfirmResolve = null;
+        function customConfirm(message) {
+            return new Promise((resolve) => {
+                document.getElementById('confirm-message').textContent = message;
+                document.getElementById('custom-confirm-modal').classList.remove('hidden');
+                currentConfirmResolve = resolve;
+            });
+        }
+        function handleConfirmResponse(choice) {
+            document.getElementById('custom-confirm-modal').classList.add('hidden');
+            if (currentConfirmResolve) currentConfirmResolve(choice);
+        }
+
+        function formatVND(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount).replace('₫', 'đ');
+        }
+
+        function setToToday() {
+            document.getElementById('report-date-picker').value = new Date().toISOString().split('T')[0];
+            renderReport();
+        }
+
+        function setSafeText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function handleContractImageUpload(inputElement, targetType) {
+            const file = inputElement.files[0];
+            if (!file) return;
+            const objectURL = URL.createObjectURL(file);
+            uploadedImages[targetType] = objectURL;
+            const previewBox = document.getElementById(`${targetType}-contract-preview-box`);
+            const previewImg = document.getElementById(`${targetType}-contract-preview`);
+            if (previewBox && previewImg) {
+                previewImg.src = objectURL;
+                previewBox.classList.remove('hidden');
+            }
+        }
+
+        function removeContractImage(targetType) {
+            uploadedImages[targetType] = '';
+            const previewBox = document.getElementById(`${targetType}-contract-preview-box`);
+            if (previewBox) previewBox.classList.add('hidden');
+        }
+
+        function showNotification(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.className = `fixed top-5 right-5 z-50 flex items-center p-4 rounded-xl shadow-xl transition-all transform duration-300 translate-y-0 opacity-100 ${type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`;
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-[-100px]'); }, 3000);
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('header button').forEach(btn => {
+                btn.className = "flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap text-indigo-200 hover:text-white hover:bg-white/10";
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) activeBtn.className = "flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap bg-white text-indigo-700 shadow-sm";
+            
+            document.getElementById('sec-inventory').classList.add('hidden');
+            document.getElementById('sec-report').classList.add('hidden');
+            document.getElementById('sec-products').classList.add('hidden');
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+
+            if (tabId === 'inventory') renderInventory();
+            if (tabId === 'report') { setToToday(); }
+            if (tabId === 'products') renderProductsTable();
+        }
+
+        function applyFilters() { renderInventory(); }
+
+        function renderInventory() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const brandVal = document.getElementById('filter-brand').value;
+            const conditionVal = document.getElementById('filter-condition').value;
+
+            const filtered = phones.filter(phone => {
+                const matchSearch = phone.name.toLowerCase().includes(searchVal) || 
+                                    phone.brand.toLowerCase().includes(searchVal) ||
+                                    phone.condition.toLowerCase().includes(searchVal);
+                const matchBrand = (brandVal === 'All' || phone.brand === brandVal);
+                const matchCondition = (conditionVal === 'All' || phone.condition === conditionVal);
+                return matchSearch && matchBrand && matchCondition;
+            });
+
+            document.getElementById('count-filtered-phones').textContent = filtered.length;
+            const container = document.getElementById('phone-list-container');
+            container.innerHTML = '';
+
+            filtered.forEach(phone => {
+                const phoneRow = document.createElement('div');
+                phoneRow.className = "p-4 hover:bg-indigo-50/30 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+                phoneRow.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <span class="text-3xl bg-slate-100 p-2 rounded-xl flex-shrink-0">${phone.image || '📱'}</span>
+                        <div class="space-y-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-[10px] font-bold uppercase">${phone.brand}</span>
+                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold">${phone.condition}</span>
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">${phone.name}</h4>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">Giá bán: <strong class="text-indigo-600">${formatVND(phone.sellingPrice)}</strong> | Tồn: ${phone.stock} chiếc</p>
+                        </div>
+                    </div>
+                    <button onclick="addToCart('${phone.id}')" ${phone.stock <= 0 ? 'disabled' : ''} class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl">${phone.stock > 0 ? 'Bán' : 'Hết hàng'}</button>`;
+                container.appendChild(phoneRow);
+            });
+            lucide.createIcons();
+        }
+
+        function addToCart(phoneId) {
+            const phone = phones.find(p => p.id === phoneId);
+            if (!phone) return;
+            const existing = cart.find(item => item.id === phoneId);
+            if (existing) {
+                if (existing.quantity >= phone.stock) { showNotification('Vượt quá tồn kho!', 'error'); return; }
+                existing.quantity += 1;
+            } else {
+                cart.push({ ...phone, quantity: 1 });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            container.innerHTML = '';
+            cart.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-100 p-2 rounded-lg flex justify-between text-xs font-bold";
+                div.innerHTML = `<span>${item.name} (x${item.quantity})</span><span>${formatVND(item.sellingPrice * item.quantity)}</span>`;
+                container.appendChild(div);
+            });
+            calculateCartTotals();
+        }
+
+        function calculateCartTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.sellingPrice * item.quantity), 0);
+            const discountInp = Number(document.getElementById('cart-discount').value) || 0;
+            const finalTotal = subtotal - discountInp;
+            document.getElementById('summary-subtotal').textContent = formatVND(subtotal);
+            document.getElementById('summary-total').textContent = formatVND(finalTotal);
+            return { subtotal, discountInp, finalTotal };
+        }
+
+        function toggleSaleContractForm() {
+            const isChecked = document.getElementById('sale-contract-toggle').checked;
+            document.getElementById('sale-contract-fields').classList.toggle('hidden', !isChecked);
+        }
+
+        function toggleTradeInForm() {
+            const isChecked = document.getElementById('tradein-toggle').checked;
+            document.getElementById('tradein-form-container').classList.toggle('hidden', !isChecked);
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) return;
+            const customer = document.getElementById('customer-name').value.trim() || 'Khách vãng lai';
+            const now = new Date();
+
+            cart.forEach(item => {
+                sales.push({
+                    id: `S-${Date.now()}`, date: now.toISOString().split('T')[0], time: now.toTimeString().substring(0,5),
+                    phoneName: item.name, quantity: item.quantity, originalPrice: item.originalPrice,
+                    sellingPrice: item.sellingPrice, total: item.sellingPrice * item.quantity, profit: (item.sellingPrice - item.originalPrice) * item.quantity,
+                    customer: customer, contract: { hasContract: false }
+                });
+                const idx = phones.findIndex(p => p.id === item.id);
+                if (idx > -1) phones[idx].stock -= item.quantity;
+            });
+
+            cart = [];
+            document.getElementById('customer-name').value = '';
+            renderCart();
+            syncLocalStorage(); // NÂNG CẤP 3: Đồng bộ LocalStorage
+            showNotification('Thanh toán thành công và cập nhật kho!');
+            switchTab('report');
+        }
+
+        function openDirectBuybackModal() { document.getElementById('buyback-modal').classList.remove('hidden'); }
+        function closeDirectBuybackModal() { document.getElementById('buyback-modal').classList.add('hidden'); }
+
+        function saveDirectBuyback(e) {
+            e.preventDefault();
+            const name = document.getElementById('bb-name').value;
+            const price = getRawNumber('bb-price'); // Lấy số đã loại bỏ dấu chấm
+            const now = new Date();
+
+            buybacks.push({
+                id: `B-${Date.now()}`, date: now.toISOString().split('T')[0], time: now.toTimeString().substring(0,5),
+                phoneName: name, price: price, customer: document.getElementById('bb-customer').value, contract: { hasContract: false }
+            });
+
+            phones.push({
+                id: `P-BUY-${Date.now()}`, name: name, brand: document.getElementById('bb-brand').value,
+                originalPrice: price, sellingPrice: Math.round(price * 1.15), stock: 1,
+                condition: document.getElementById('bb-condition').value, image: '📱'
+            });
+
+            closeDirectBuybackModal();
+            syncLocalStorage(); // NÂNG CẤP 3: Đồng bộ LocalStorage
+            showNotification('Đã chi tiền thu mua máy lẻ!');
+            renderInventory();
+        }
+
+        function renderReport() {
+            const reportDate = document.getElementById('report-date-picker').value;
+            setSafeText('rep-selected-date-title', reportDate);
+            
+            const dailySales = sales.filter(s => s.date === reportDate);
+            const dailyBuybacks = buybacks.filter(b => b.date === reportDate);
+            
+            const cashIn = dailySales.reduce((sum, s) => sum + s.total, 0);
+            const cashOut = dailyBuybacks.reduce((sum, b) => sum + b.price, 0);
+            
+            setSafeText('cash-start-display', formatVND(startingCash));
+            setSafeText('cash-in-display', `+${formatVND(cashIn)}`);
+            setSafeText('cash-out-display', `-${formatVND(cashOut)}`);
+            setSafeText('cash-current-display', formatVND(startingCash + cashIn - cashOut));
+
+            // Render bảng hóa đơn bán lẻ
+            const salesBody = document.getElementById('report-sales-body');
+            salesBody.innerHTML = '';
+            dailySales.forEach(sale => {
+                salesBody.innerHTML += `<tr><td class="p-3"><b>${sale.id}</b><br><span class="text-slate-400">${sale.time}</span></td><td class="p-3">${sale.customer}</td><td class="p-3">${sale.phoneName}</td><td class="p-3 text-right text-indigo-600 font-bold">${formatVND(sale.total)}</td><td class="p-3 text-center"><span class="text-slate-400 italic">Không lập HĐ</span></td></tr>`;
+            });
+
+            // Render bảng thu mua máy cũ
+            const buybacksBody = document.getElementById('report-buybacks-body');
+            buybacksBody.innerHTML = '';
+            dailyBuybacks.forEach(bb => {
+                buybacksBody.innerHTML += `<tr><td class="p-3"><b>${bb.id}</b><br><span class="text-slate-400">${bb.time}</span></td><td class="p-3">${bb.customer}</td><td class="p-3">${bb.phoneName}</td><td class="p-3 text-right text-rose-600 font-bold">${formatVND(bb.price)}</td><td class="p-3 text-center"><span class="text-slate-400 italic">Không lập HĐ</span></td></tr>`;
+            });
+            lucide.createIcons();
+        }
+
+        function updateStartingCash() {
+            startingCash = Number(document.getElementById('input-starting-cash').value.replace(/\./g, '')) || 0;
+            syncLocalStorage(); // NÂNG CẤP 3
+            renderReport();
+        }
+
+        // --- CẤU HÌNH KHO HÀNG (THÊM / SỬA / XÓA) ---
+        function renderProductsTable() {
+            const tableBody = document.getElementById('products-table-body');
+            tableBody.innerHTML = '';
+            phones.forEach(phone => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-900">${phone.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap uppercase text-xs font-bold">${phone.brand}</td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap text-xs font-bold text-indigo-600">${phone.condition}</td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap font-medium">${phone.color || 'Mặc định'}</td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap font-bold text-emerald-600">${phone.stock} máy</td>
+                    <td class="px-6 py-4 text-right font-medium text-slate-600">${formatVND(phone.originalPrice)}</td>
+                    <td class="px-6 py-4 text-right font-bold text-indigo-600">${formatVND(phone.sellingPrice)}</td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="openProductModal('${phone.id}')" class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteProduct('${phone.id}', '${phone.name}')" class="p-1.5 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>`;
+                tableBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function openProductModal(phoneId = null) {
+            const form = document.getElementById('product-form');
+            form.reset();
+            if (phoneId) {
+                const phone = phones.find(p => p.id === phoneId);
+                if (!phone) return;
+                document.getElementById('modal-title').textContent = "Chỉnh sửa sản phẩm";
+                document.getElementById('form-phone-id').value = phone.id;
+                document.getElementById('form-name').value = phone.name;
+                document.getElementById('form-brand').value = phone.brand;
+                document.getElementById('form-storage').value = phone.storage || '';
+                document.getElementById('form-color').value = phone.color || '';
+                document.getElementById('form-condition').value = phone.condition;
+                document.getElementById('form-stock').value = phone.stock;
+                
+                // Set tiền kèm định dạng dấu chấm
+                document.getElementById('form-original-price').value = phone.originalPrice.toLocaleString('vi-VN');
+                document.getElementById('form-selling-price').value = phone.sellingPrice.toLocaleString('vi-VN');
+            } else {
+                document.getElementById('modal-title').textContent = "Nhập điện thoại mới vào kho";
+                document.getElementById('form-phone-id').value = '';
+            }
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() { document.getElementById('product-modal').classList.add('hidden'); }
+
+        async function saveProduct(e) {
+            e.preventDefault();
+            const id = document.getElementById('form-phone-id').value;
+            const name = document.getElementById('form-name').value.trim();
+            const brand = document.getElementById('form-brand').value;
+            const storage = document.getElementById('form-storage').value;
+            const color = document.getElementById('form-color').value;
+            const condition = document.getElementById('form-condition').value;
+            const stock = Number(document.getElementById('form-stock').value);
+            
+            // Đọc số nguyên gốc sau khi bỏ dấu chấm phân tách
+            const originalPrice = getRawNumber('form-original-price');
+            const sellingPrice = getRawNumber('form-selling-price');
+
+            if (id) {
+                const idx = phones.findIndex(p => p.id === id);
+                if (idx > -1) {
+                    phones[idx] = { ...phones[idx], name, brand, storage, color, condition, stock, originalPrice, sellingPrice };
+                    showNotification('Đã cập nhật thông tin máy!');
+                }
+            } else {
+                phones.push({ id: `P-${Date.now()}`, name, brand, storage, color, condition, stock, originalPrice, sellingPrice, image: '📱' });
+                showNotification('Đã thêm dòng máy mới vào kho!');
+            }
+            closeProductModal();
+            syncLocalStorage(); // NÂNG CẤP 3: Đồng bộ LocalStorage
+            populateBrandFilters();
+            if (currentTab === 'products') renderProductsTable();
+            if (currentTab === 'inventory') renderInventory();
+        }
+
+        async function deleteProduct(id, name) {
+            const accept = await customConfirm(`Bạn có muốn xóa dòng máy "${name}" vĩnh viễn khỏi kho hàng của tiệm?`);
+            if (!accept) return;
+            phones = phones.filter(p => p.id !== id);
+            syncLocalStorage(); // NÂNG CẤP 3: Đồng bộ LocalStorage
+            populateBrandFilters();
+            renderProductsTable();
+        }
+
+        // --- NÂNG CẤP 1: TỰ ĐỘNG ĐỒNG BỘ MẢNG KHOCAPHATTHEM KHI KHỞI CHẠY ---
+        function autoSyncExternalInventory() {
+            if (window.khoCapNhatThem && Array.isArray(window.khoCapNhatThem)) {
+                let checkAdded = false;
+                window.khoCapNhatThem.forEach(item => {
+                    // Dữ liệu tuple chuyển đổi: item = [Hãng, Tên, Giá bán dạng rút gọn * 1000]
+                    const brand = item[0] || 'Xiaomi';
+                    const rawName = item[1] || 'Tên máy';
+                    const calculatedPrice = Number(item[2]) * 1000 || 0; // quy đổi 12300 thành 12.300.000đ
+
+                    // Kiểm tra xem dòng máy đã tồn tại trong mảng phones chưa
+                    const exist = phones.some(p => p.name.toLowerCase() === rawName.toLowerCase());
+                    if (!exist) {
+                        phones.push({
+                            id: `EXT-${Math.floor(Math.random() * 100000)}`,
+                            name: rawName,
+                            brand: brand,
+                            originalPrice: Math.round(calculatedPrice * 0.85), // tạm tính giá gốc bằng 85% giá bán
+                            sellingPrice: calculatedPrice,
+                            stock: 1,
+                            color: "Bản Quốc Tế",
+                            storage: "Tiêu chuẩn",
+                            condition: "99% Keng",
+                            accessories: [],
+                            image: "📱"
+                        });
+                        checkAdded = true;
+                    }
+                });
+                if (checkAdded) {
+                    syncLocalStorage(); // Đồng bộ ngay
+                    console.log("Đã đồng bộ bổ sung thành công các thiết bị mới từ khoCapNhatThem vào kho chính.");
+                }
+            }
+        }
+
+        window.onload = () => { 
+            autoSyncExternalInventory(); // Kích hoạt nạp đồng bộ mảng ngoài
+            populateBrandFilters(); 
+            renderInventory(); 
+            renderCart(); 
+        };
+    </script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.realtimeDB = db;
+window.realtimeCollections = {
+  products: collection(db, "products"),
+  sales: collection(db, "sales"),
+  reports: collection(db, "reports"),
+  contracts: collection(db, "contracts")
+};
+
+console.log("Điện Thoại Ngon Realtime V3 Ready");
+</script>
+
+<script>
+window.khoCapNhatThem = [['Xiaomi', 'Mi 17 12/256 ND', '12300'], ['Xiaomi', 'K90 Fullbox', '8500'], ['Xiaomi', 'Mi 14 Ultra 12/256 ROM quốc tế Fullbox', '9900'], ['Xiaomi', 'Redmagic 10 Pro 12/256', '11000'], ['Xiaomi', 'Mi 17 Ultra by Leica', '24500'], ['Xiaomi', 'Mi 14 Ultra 16/512', '10300'], ['Xiaomi', 'Mi 15 Ultra chính hãng BH 2027 Fullbox 16/512', '17500'], ['Xiaomi', 'Mi 15 Ultra 12/256', '11999'], ['Xiaomi', 'Mi 15', '8500'], ['Xiaomi', 'Mi 15', '8500'], ['Xiaomi', 'Note 13 5G', '2500'], ['Xiaomi', 'Note 13 8/128 chính hãng', '1500'], ['Xiaomi', 'Mi Mix4', '3200'], ['Meizu', 'Meizu 21 16/256 chip 8Gen3', '4700'], ['Xiaomi', 'Mi 13 Ultra ROM quốc tế', '7300']];
+</script>
+
+</body>
+</html>
